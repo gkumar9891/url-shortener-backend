@@ -22,11 +22,10 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use('/api/v1/', cors(corsOptionsDelegate), urlShortnerRoutes);
 
-const port = process.env.APP_PORT;
+const port = process.env.APP_PORT!;
 
 async function main() {
   let isDatabaseConnected = false;
-
   await sequalize.sync()
     .then(() => {
       isDatabaseConnected = true;
@@ -36,9 +35,8 @@ async function main() {
       console.error(`Unable to connect to the database`);
     })
 
-
   if (isDatabaseConnected) {
-    app.listen(port, () => {
+    app.listen(parseInt(port), () => {
       console.log(`app is listening on port ${port}`)
     })
   }

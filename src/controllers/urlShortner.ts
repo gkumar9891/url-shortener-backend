@@ -1,4 +1,5 @@
 import { createHmac } from "crypto";
+import Url from "../models/Url";
 
 export const urlShortner = async (req:any, res:any, next:any) => {
     debugger
@@ -13,12 +14,31 @@ export const urlShortner = async (req:any, res:any, next:any) => {
     const [from, to] = appShortUrlLimit.split('_');
     
     //created hash
-    const hash = createHmac(encryptionAlgo, secret)
+    let hash = createHmac(encryptionAlgo, secret)
                .update(req.body.url)
                .digest('hex')
                .slice(parseInt(from), parseInt(to));
-            
-    res.send(hash)      
+    
+    const isUrlExist = await Url.findOne({where: { short_url: hash}});
+
+    //to create unique short url;
+    if(isUrlExist) {
+        let tempUrl = req.body.url;
+        const number = Math.random() * 10000; 
+        tempUrl = tempUrl + btoa(number+'');
+        
+        hash = createHmac(encryptionAlgo, secret)
+                .update(tempUrl)
+                .digest('hex')
+                .slice(parseInt(from), parseInt(to));
+    }
+               
+    const url = await Url.create({
+        short_url: hash,
+        original_url: req.body.url
+    });
+
+    res.send(url.toJSON())      
 }
 
 export default {urlShortner}
