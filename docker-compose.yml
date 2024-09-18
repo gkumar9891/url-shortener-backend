@@ -1,10 +1,12 @@
-version: '3'
+version: '3.1'
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     command: sleep infinity
+    ports:
+      - 8080:8080
     volumes:
       - .:/home/app
 
@@ -14,6 +16,7 @@ services:
     ports:
       - 3306:3306
     environment:
+      MYSQL_DATABASE: url_shortner
       MYSQL_ROOT_PASSWORD: passphrase
     volumes:
       - sql_data:/var/lib/mysql
