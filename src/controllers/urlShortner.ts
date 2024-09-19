@@ -1,8 +1,8 @@
 import { createHmac } from "crypto";
 import Url from "../models/Url";
+import path from "path";
 
-export const urlShortner = async (req:any, res:any, next:any) => {
-    debugger
+const urlShortner = async (req:any, res:any, next:any) => {
     if(!req.body.url) {
         return res.status(400).send(`url is required`)
     }
@@ -12,26 +12,16 @@ export const urlShortner = async (req:any, res:any, next:any) => {
     const appShortUrlLimit = process.env.APP_IDEAL_SHORT_URL_LIMIT!;
 
     const [from, to] = appShortUrlLimit.split('_');
-    
-    //created hash
-    let hash = createHmac(encryptionAlgo, secret)
-               .update(req.body.url)
-               .digest('hex')
-               .slice(parseInt(from), parseInt(to));
-    
-    const isUrlExist = await Url.findOne({where: { short_url: hash}});
 
     //to create unique short url;
-    if(isUrlExist) {
-        let tempUrl = req.body.url;
-        const number = Math.random() * 10000; 
-        tempUrl = tempUrl + btoa(number+'');
-        
-        hash = createHmac(encryptionAlgo, secret)
-                .update(tempUrl)
-                .digest('hex')
-                .slice(parseInt(from), parseInt(to));
-    }
+    let tempUrl = req.body.url;
+    const number = Math.random() * 10000; 
+    tempUrl = tempUrl + btoa(number+'') + new Date().toTimeString();
+    
+    const hash = createHmac(encryptionAlgo, secret)
+            .update(tempUrl)
+            .digest('hex')
+            .slice(parseInt(from), parseInt(to));
                
     const url = await Url.create({
         short_url: hash,
@@ -41,4 +31,15 @@ export const urlShortner = async (req:any, res:any, next:any) => {
     res.send(url.toJSON())      
 }
 
-export default {urlShortner}
+const getOriginalUrl = async (req:any, res:any, next:any) => {
+    const url:any = await Url.findOne({where: {short_url : req.params.shortCode}});
+
+    if(!!url) {
+        return res.redirect(url.original_url)
+    }
+
+    return res.sendFile(path.join(__dirname, '../../public/not-found.html'))
+}
+
+
+export default {urlShortner, getOriginalUrl}

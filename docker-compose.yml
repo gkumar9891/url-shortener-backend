@@ -19,7 +19,4 @@ services:
       MYSQL_DATABASE: url_shortner
       MYSQL_ROOT_PASSWORD: passphrase
     volumes:
-      - sql_data:/var/lib/mysql
-
-volumes:
-  sql_data:
+      - ./sql_data:/var/lib/mysql
