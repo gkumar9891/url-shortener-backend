@@ -1,3 +1,11 @@
+<<<<<<< Updated upstream
 node_modules
 package-lock.json
 build
+=======
+node_modules
+package-lock.json
+build
+.env
+sql_data
+>>>>>>> Stashed changes
