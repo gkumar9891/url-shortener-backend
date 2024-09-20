@@ -1,24 +1,25 @@
 import { createHmac } from "crypto";
-import Url from "../models/Url";
+import Url, { UrlModel } from "../models/Url";
 import path from "path";
+import {Request, Response, NextFunction as Next} from "express";
 
-const urlShortner = async (req:any, res:any, next:any) => {
+const urlShortner = async (req:Request, res:Response, next:Next) => {
     if(!req.body.url) {
         return res.status(400).send(`url is required`)
     }
 
-    const secret = process.env.APP_SECRET!;
-    const encryptionAlgo = process.env.APP_ENCRYPTION_ALGO!;
-    const appShortUrlLimit = process.env.APP_IDEAL_SHORT_URL_LIMIT!;
+    const secret:string = process.env.APP_SECRET! as string;
+    const encryptionAlgo:string = process.env.APP_ENCRYPTION_ALGO! as string;
+    const appShortUrlLimit:string = process.env.APP_IDEAL_SHORT_URL_LIMIT! as string;
 
-    const [from, to] = appShortUrlLimit.split('_');
+    const [from, to]:[string, string] = appShortUrlLimit.split('_') as [string, string];
 
     //to create unique short url;
-    let tempUrl = req.body.url;
-    const number = Math.random() * 10000; 
+    let tempUrl:string = req.body.url;
+    const number:number = Math.random() * 10000; 
     tempUrl = tempUrl + btoa(number+'') + new Date().toTimeString();
     
-    const hash = createHmac(encryptionAlgo, secret)
+    const hash:string = createHmac(encryptionAlgo, secret)
             .update(tempUrl)
             .digest('hex')
             .slice(parseInt(from), parseInt(to));
@@ -31,8 +32,8 @@ const urlShortner = async (req:any, res:any, next:any) => {
     res.send(url.toJSON())      
 }
 
-const getOriginalUrl = async (req:any, res:any, next:any) => {
-    const url:any = await Url.findOne({where: {short_url : req.params.shortCode}});
+const getOriginalUrl = async (req:Request, res:Response, next:Next) => {
+    const url:UrlModel|null = await Url.findOne({where: {short_url : req.params.shortCode}}) as UrlModel | null;
 
     if(!!url) {
         return res.redirect(url.original_url)

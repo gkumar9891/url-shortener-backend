@@ -9,6 +9,8 @@ services:
       - 8080:8080
     volumes:
       - .:/home/app
+    networks:
+      - net
 
   mysql:
     image: mysql
@@ -20,3 +22,9 @@ services:
       MYSQL_ROOT_PASSWORD: passphrase
     volumes:
       - ./sql_data:/var/lib/mysql
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge
