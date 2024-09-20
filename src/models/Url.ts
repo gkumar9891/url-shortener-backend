@@ -1,5 +1,5 @@
 import sequelize from "../db";
-import { DataTypes } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 
 const Url = sequelize.define('Url', {
     short_url: {
@@ -15,5 +15,17 @@ const Url = sequelize.define('Url', {
     timestamps: true
 }
 );
+
+// Define the interface representing the attributes of the Url model
+interface UrlAttributes {
+    original_url: string;
+    short_url: string;
+}
+
+// Extend the Sequelize Model class
+export class UrlModel extends Model<UrlAttributes> implements UrlAttributes {
+    public original_url!: string;
+    public short_url!: string;
+}
 
 export default Url;
