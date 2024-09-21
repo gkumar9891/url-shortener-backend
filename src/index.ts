@@ -14,7 +14,9 @@ import path from "path";
 const app = express();
 
 // whitelist urls
-let whitelist = ['http://127.0.0.1:5500']
+let whitelist:string|string[] = process.env.APP_WHITELIST_URLS! as string;
+whitelist= whitelist.split(',');
+
 let corsOptionsDelegate = function (req:Request, callback: (err: Error | null, options: { origin: boolean }) => void) {
   let corsOptions;
   const origin:string = req.header('Origin')!;
@@ -64,8 +66,8 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use('/api/v1/', cors(corsOptionsDelegate), urlShortnerRoutes);
 
 app.all('*', (req: Request, res: Response, next: Next) => {
-  return res.status(404).json({
-    message: `Can't find ${req.params.shortCode} on this server!`
+  return res.status(500).json({
+    message: `Internal Server Error`
   })
 });
 
