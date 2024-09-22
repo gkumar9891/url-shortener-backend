@@ -47,7 +47,7 @@ const urlShortner = async (req: Request, res: Response, next: Next) => {
 const getOriginalUrl = async (req: Request, res: Response, next: Next) => {
     const url: UrlModel | null = await Url.findOne({ where: { short_url: req.params.shortCode } }) as UrlModel | null;
 
-    if (!!url) {
+    if (url) {
         return res.redirect(url.original_url)
     }
 

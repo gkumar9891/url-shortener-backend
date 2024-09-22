@@ -17,7 +17,7 @@ const app = express();
 let whitelist:string|string[] = process.env.APP_WHITELIST_URLS! as string;
 whitelist= whitelist.split(',');
 
-let corsOptionsDelegate = function (req:Request, callback: (err: Error | null, options: { origin: boolean }) => void) {
+const corsOptionsDelegate = function (req:Request, callback: (err: Error | null, options: { origin: boolean }) => void) {
   let corsOptions;
   const origin:string = req.header('Origin')!;
   if (whitelist.indexOf(origin) !== -1) {
