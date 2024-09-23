@@ -55,7 +55,7 @@ const getOriginalUrl = async (req: Request, res: Response, next: Next) => {
     try {
         const url: UrlModel | null = await Url.findOne({ where: { short_url: req.params.shortCode } }) as UrlModel | null;
     
-        if (!!url) {
+        if (url) {
             return res.redirect(url.original_url)
         }
     
