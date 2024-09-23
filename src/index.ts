@@ -3,7 +3,7 @@ dotenv.config();
 
 import express, {Request, Response, NextFunction as Next} from "express";
 import cors from "cors";
-import urlShortnerRoutes from "./routes/urlShortnerRoutes";
+import urlshortenerRoutes from "./routes/urlshortenerRoutes";
 import sequalize from "./db";
 import morgan from "morgan";
 import helmet from "helmet";
@@ -63,7 +63,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-app.use('/api/v1/', cors(corsOptionsDelegate), urlShortnerRoutes);
+app.use('/api/v1/', cors(corsOptionsDelegate), urlshortenerRoutes);
 
 app.all('*', (req: Request, res: Response, next: Next) => {
   return res.status(500).json({

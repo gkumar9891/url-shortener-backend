@@ -3,7 +3,7 @@ import Url, { UrlModel } from "../models/Url";
 import path from "path";
 import { Request, Response, NextFunction as Next } from "express";
 
-const urlShortner = async (req: Request, res: Response, next: Next) => {
+const urlshortener = async (req: Request, res: Response, next: Next) => {
     try {
         const validURL: Function = (str: string) => {
             const pattern: RegExp = new RegExp('^(https?:\\/\\/)?' + // protocol
@@ -69,4 +69,4 @@ const getOriginalUrl = async (req: Request, res: Response, next: Next) => {
 }
 
 
-export default { urlShortner, getOriginalUrl }
+export default { urlshortener, getOriginalUrl }
