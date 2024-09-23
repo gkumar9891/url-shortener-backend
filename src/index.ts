@@ -67,7 +67,7 @@ app.use('/api/v1/', cors(corsOptionsDelegate), urlShortnerRoutes);
 
 app.all('*', (req: Request, res: Response, next: Next) => {
   return res.status(500).json({
-    message: `Internal Server Error`
+    message: `Internal Server ${req.originalUrl} Error`
   })
 });
 
