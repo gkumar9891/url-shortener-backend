@@ -1,5 +1,5 @@
 import express from 'express';
-import urlshortenerController from '../controllers/urlshortener';
+import urlshortenerController from '../controllers/urlShortener';
 const router = express.Router();
 
 router

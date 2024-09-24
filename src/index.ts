@@ -3,13 +3,14 @@ dotenv.config();
 
 import express, {Request, Response, NextFunction as Next} from "express";
 import cors from "cors";
-import urlshortenerRoutes from "./routes/urlshortenerRoutes";
+import urlshortenerRoutes from "./routes/urlShortenerRoutes";
 import sequalize from "./db";
 import morgan from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import xss from "xss";
 import path from "path";
+import urlShortenerController from "./controllers/urlShortener";
 
 const app = express();
 
@@ -52,26 +53,28 @@ app.use(sanitizeInput);
 
 // Limit requests from same API
 const limiter = rateLimit({
-  max: 50,
-  windowMs: 60 * 1000,
+  max: 100,
+  windowMs: 60 * 1000 * 60,
   message: 'Too many requests from this IP, please try again in an hour!'
 });
-app.use('/api', limiter);
+app.use('/', limiter);
 
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.get('/:shortCode', cors(corsOptionsDelegate), urlShortenerController.getOriginalUrl); //created as alias to find full url in less characters
 app.use('/api/v1/', cors(corsOptionsDelegate), urlshortenerRoutes);
 
 app.all('*', (req: Request, res: Response, next: Next) => {
   return res.status(500).json({
-    message: `Internal Server ${req.originalUrl} Error`
+    status: 'fail',
+    message: `Internal Server Error`
   })
 });
 
-const port = process.env.APP_PORT!;
+const port = process.env.APP_PORT! || "8080";
 
 async function main() {
   let isDatabaseConnected:boolean = false;
