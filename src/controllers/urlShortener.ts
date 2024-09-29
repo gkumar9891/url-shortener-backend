@@ -37,6 +37,12 @@ const urlshortener = async (req: Request, res: Response, next: Next) => {
             .digest('hex')
             .slice(parseInt(from), parseInt(to));
 
+        const urlRegex = /^(https?:\/\/)/;
+        
+        if(!urlRegex.test(req.body.url)) {
+            req.body.url = `https://${req.body.url}`
+        }
+    
         const url = await Url.create({
             short_url: hash,
             original_url: req.body.url
@@ -56,10 +62,13 @@ const getOriginalUrl = async (req: Request, res: Response, next: Next) => {
         const url: UrlModel | null = await Url.findOne({ where: { short_url: req.params.shortCode } }) as UrlModel | null;
     
         if (url) {
-            return res.redirect(url.original_url)
+            return res.status(200).json(url.toJSON());
         }
     
-        return res.sendFile(path.join(__dirname, '../../public/not-found.html'))
+        return res.status(404).json({
+            status: 'fail',
+            message: 'not-found'
+        })
     } catch (err) {
         res.status(500).json({
             status: 'fail',
