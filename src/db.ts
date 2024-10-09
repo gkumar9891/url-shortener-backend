@@ -1,4 +1,5 @@
 import { Sequelize } from 'sequelize'
+import pg from 'pg';
 
 // Create a new Sequelize instance (connect to MySQL)
 const dbName:string = process.env.APP_DB_NAME! as string;
@@ -17,7 +18,9 @@ const dbUrl:string = process.env.APP_DB_URL! as string;
 let sequelize: Sequelize;
 
 if(dbUrl) {
-   sequelize = new Sequelize(dbUrl);
+   sequelize = new Sequelize(dbUrl, {
+    dialectModule: pg
+  });
 } else {
   sequelize = new Sequelize(dbName, dbUserName, dbPassword, {
     host: dbHost,
