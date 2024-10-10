@@ -64,8 +64,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-app.get('/:shortCode', cors(corsOptionsDelegate), urlShortenerController.getOriginalUrl); //created as alias to find full url in less characters
-app.use('/api/v1/', cors(corsOptionsDelegate), urlshortenerRoutes);
+app.use(cors(corsOptionsDelegate));
+app.get('/:shortCode', urlShortenerController.getOriginalUrl); //created as alias to find full url in less characters
+app.use('/api/v1/', urlshortenerRoutes);
 
 app.all('*', (req: Request, res: Response, next: Next) => {
   return res.status(500).json({
