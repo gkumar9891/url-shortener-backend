@@ -3,6 +3,3 @@ package-lock.json
 build
 .env
 sql_data
-.vercel
-
-.vercel
