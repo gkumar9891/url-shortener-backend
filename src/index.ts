@@ -11,6 +11,8 @@ import rateLimit from "express-rate-limit";
 import xss from "xss";
 import path from "path";
 import urlShortenerController from "./controllers/urlShortener";
+import AppError from './utils/appError';
+import globalErrorHandler from './controllers/errorController';
 
 const app = express();
 
@@ -66,14 +68,14 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cors(corsOptionsDelegate));
 app.get('/:shortCode', urlShortenerController.getOriginalUrl); //created as alias to find full url in less characters
-app.use('/api/v1/', urlshortenerRoutes);
+app.use('/api/v1/url-shortener', urlshortenerRoutes);
 
 app.all('*', (req: Request, res: Response, next: Next) => {
-  return res.status(500).json({
-    status: 'fail',
-    message: `Internal Server Error`
-  })
+  next(AppError.create(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+app.use(globalErrorHandler);
+
 
 const port = process.env.APP_PORT! || "8080";
 

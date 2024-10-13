@@ -3,11 +3,11 @@ import urlshortenerController from '../controllers/urlShortener';
 const router = express.Router();
 
 router
-    .route('/url-shortener')
+    .route('/')
     .post(urlshortenerController.urlshortener)
 
 router
-    .route('/url-shortener/:shortCode')
+    .route('/:shortCode')
     .get(urlshortenerController.getOriginalUrl)
 
 export default router;

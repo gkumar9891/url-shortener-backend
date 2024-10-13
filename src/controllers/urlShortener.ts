@@ -1,11 +1,10 @@
 import { createHmac } from "crypto";
 import Url, { UrlModel } from "../models/Url";
-import path from "path";
-import { Request, Response, NextFunction as Next } from "express";
+import { Request, Response, NextFunction as Next, NextFunction } from "express";
+import catchAsync from '../utils/catchAsync';
 
-const urlshortener = async (req: Request, res: Response, next: Next) => {
-    try {
-        const validURL: Function = (str: string) => {
+const urlshortener = catchAsync(async (req, res, next) => {
+        const validURL = (str: string) => {
             const pattern: RegExp = new RegExp('^(https?:\\/\\/)?' + // protocol
                 '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
                 '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
@@ -38,44 +37,32 @@ const urlshortener = async (req: Request, res: Response, next: Next) => {
             .slice(parseInt(from), parseInt(to));
 
         const urlRegex = /^(https?:\/\/)/;
-        
-        if(!urlRegex.test(req.body.url)) {
+
+        if (!urlRegex.test(req.body.url)) {
             req.body.url = `https://${req.body.url}`
         }
-    
+
         const url = await Url.create({
             short_url: hash,
             original_url: req.body.url
         });
 
         res.send(url.toJSON())
-    } catch (err) {
-        res.status(500).json({
-            status: 'fail',
-            message: 'internal server error'
-        })
-    }
-}
+})
 
-const getOriginalUrl = async (req: Request, res: Response, next: Next) => {
-    try {
+
+const getOriginalUrl = catchAsync(async (req: Request, res: Response, next: Next) => {
         const url: UrlModel | null = await Url.findOne({ where: { short_url: req.params.shortCode } }) as UrlModel | null;
-    
+
         if (url) {
             return res.status(200).json(url.toJSON());
         }
-    
-        return res.status(404).json({
+
+        res.status(404).json({
             status: 'fail',
             message: 'not-found'
         })
-    } catch (err) {
-        res.status(500).json({
-            status: 'fail',
-            message: 'Internal server error'
-        })
-    }
-}
+})
 
 
 export default { urlshortener, getOriginalUrl }
