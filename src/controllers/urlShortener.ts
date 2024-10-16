@@ -16,9 +16,9 @@ const urlshortener = catchAsync(async (req, res, next) => {
     }
 
     if (!req.body.url) {
-        return res.status(400).send(`url is required`)
+        return next(AppError.create(`url is required`, 400));
     } else if (!validURL(req.body.url)) {
-        return res.status(400).send(`url is not valid`)
+        return next(AppError.create(`url is not valid`, 400));
     }
 
     const secret: string = process.env.APP_SECRET! as string;
@@ -48,7 +48,10 @@ const urlshortener = catchAsync(async (req, res, next) => {
         original_url: req.body.url
     });
 
-    res.send(url.toJSON())
+    res.status(200).send({
+        status: 'success',
+        data: url.toJSON()
+    })
 })
 
 
@@ -56,7 +59,10 @@ const getOriginalUrl = catchAsync(async (req: Request, res: Response, next: Next
     const url: UrlModel | null = await Url.findOne({ where: { short_url: req.params.shortCode } }) as UrlModel | null;
 
     if (url) {
-        return res.status(200).json(url.toJSON());
+        return res.status(200).json({ 
+            status: 'success',
+            data: url.toJSON()
+        });
     }
 
     next(AppError.create(`not-found`, 404));
@@ -85,7 +91,10 @@ const createAlias = catchAsync(async (req: Request, res: Response, next: NextFun
             original_url: url
         })
 
-        res.status(201).json(_url.toJSON());
+        res.status(201).json({
+            status: 'success',
+            data: _url.toJSON()
+        });
     } catch (err: any) {
         if (err.original.code == "ER_DUP_ENTRY") {
             return next(AppError.create(`pass another unique short code`, 400));
