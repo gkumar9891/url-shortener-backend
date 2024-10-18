@@ -11,6 +11,10 @@ const Url = sequelize.define('Url', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    expiry_date: {
+        type: DataTypes.DATE,
+        allowNull: true   
+    }
 }, {
     timestamps: true
 }
@@ -20,12 +24,14 @@ const Url = sequelize.define('Url', {
 interface UrlAttributes {
     original_url: string;
     short_url: string;
+    expiry_date: Date;
 }
 
 // Extend the Sequelize Model class
 export class UrlModel extends Model<UrlAttributes> implements UrlAttributes {
     public original_url!: string;
     public short_url!: string;
+    public expiry_date!: Date;
 }
 
 export default Url;

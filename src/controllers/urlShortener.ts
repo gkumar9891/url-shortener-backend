@@ -21,6 +21,14 @@ const urlshortener = catchAsync(async (req, res, next) => {
         return next(AppError.create(`url is not valid`, 400));
     }
 
+    const _expiryDate = new Date(req.body.expiryDate);
+    if (isNaN(_expiryDate.getTime())) {
+        return next(AppError.create('Invalid date format', 400));
+    } else if(_expiryDate.getTime() < new Date().getTime()) {
+        return next(AppError.create(`expiry date should be greater than today`, 400));
+    }
+
+
     const secret: string = process.env.APP_SECRET! as string;
     const encryptionAlgo: string = process.env.APP_ENCRYPTION_ALGO! as string;
     const appShortUrlLimit: string = process.env.APP_IDEAL_SHORT_URL_LIMIT! as string;
@@ -45,7 +53,8 @@ const urlshortener = catchAsync(async (req, res, next) => {
 
     const url = await Url.create({
         short_url: hash,
-        original_url: req.body.url
+        original_url: req.body.url,
+        expiry_date: req.body.expiryDate || null
     });
 
     res.status(200).send({
@@ -59,6 +68,11 @@ const getOriginalUrl = catchAsync(async (req: Request, res: Response, next: Next
     const url: UrlModel | null = await Url.findOne({ where: { short_url: req.params.shortCode } }) as UrlModel | null;
 
     if (url) {
+
+        if(url.expiry_date < new Date()) {
+            return next(AppError.create(`url is expired`, 410));
+        }
+
         return res.status(200).json({ 
             status: 'success',
             data: url.toJSON()
@@ -69,7 +83,7 @@ const getOriginalUrl = catchAsync(async (req: Request, res: Response, next: Next
 })
 
 const createAlias = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { shortCode, url } = req.body;
+    const { shortCode, url, expiryDate } = req.body;
 
     if (!shortCode || !url) {
         next(AppError.create(`plese pass short code and url`, 400));
@@ -85,10 +99,18 @@ const createAlias = catchAsync(async (req: Request, res: Response, next: NextFun
         return next(AppError.create(`shortCode length should be atleast ${shortCodelength}`, 400));
     }
 
+    const _expiryDate = new Date(req.body.expiryDate);
+    if (isNaN(_expiryDate.getTime())) {
+        return next(AppError.create('Invalid date format', 400));
+    } else if(_expiryDate.getTime() < new Date().getTime()) {
+        return next(AppError.create(`expiry date should be greater than today`, 400));
+    }
+
     try {
         const _url = await Url.create({
             short_url: shortCode,
-            original_url: url
+            original_url: url,
+            expiry_date: expiryDate || null
         })
 
         res.status(201).json({
