@@ -24,7 +24,7 @@ const Url = sequelize.define('Url', {
 interface UrlAttributes {
     original_url: string;
     short_url: string;
-    expiry_date: Date;
+    expiry_date: Date | null;
 }
 
 // Extend the Sequelize Model class

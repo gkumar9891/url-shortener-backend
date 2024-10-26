@@ -22,9 +22,9 @@ const urlshortener = catchAsync(async (req, res, next) => {
     }
 
     const _expiryDate = new Date(req.body.expiryDate);
-    if (isNaN(_expiryDate.getTime())) {
+    if (req.body.expiryDate && isNaN(_expiryDate.getTime())) {
         return next(AppError.create('Invalid date format', 400));
-    } else if(_expiryDate.getTime() < new Date().getTime()) {
+    } else if(req.body.expiryDate && _expiryDate.getTime() < new Date().getTime()) {
         return next(AppError.create(`expiry date should be greater than today`, 400));
     }
 
@@ -100,9 +100,9 @@ const createAlias = catchAsync(async (req: Request, res: Response, next: NextFun
     }
 
     const _expiryDate = new Date(req.body.expiryDate);
-    if (isNaN(_expiryDate.getTime())) {
+    if (req.body.expiryDate && isNaN(_expiryDate.getTime())) {
         return next(AppError.create('Invalid date format', 400));
-    } else if(_expiryDate.getTime() < new Date().getTime()) {
+    } else if(req.body.expiryDate && _expiryDate.getTime() < new Date().getTime()) {
         return next(AppError.create(`expiry date should be greater than today`, 400));
     }
 
