@@ -69,7 +69,7 @@ const getOriginalUrl = catchAsync(async (req: Request, res: Response, next: Next
 
     if (url) {
 
-        if(url.expiry_date < new Date()) {
+        if(url.expiry_date && url.expiry_date < new Date()) {
             return next(AppError.create(`url is expired`, 410));
         }
 
