@@ -3,29 +3,36 @@ import Url, { UrlModel } from "../models/Url";
 import { Request, Response, NextFunction as Next, NextFunction } from "express";
 import catchAsync from '../utils/catchAsync';
 import AppError from "../utils/appError";
+import xlsx from 'xlsx';
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
-const urlshortener = catchAsync(async (req, res, next) => {
-    const validURL = (str: string) => {
-        const pattern: RegExp = new RegExp('^(https?:\\/\\/)?' + // protocol
-            '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
-            '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
-            '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
-            '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
-            '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
-        return !!pattern.test(str);
+export interface MulterRequest extends Request {
+    file?: Express.Multer.File;
+}
+
+const validURL = (str: string) => {
+    const pattern: RegExp = new RegExp('^(https?:\\/\\/)?' + // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+        '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+    return !!pattern.test(str);
+}
+
+const makeShortUrl = async (url:string, expiryDate:string) => {
+    if (!url) {
+        throw AppError.create(`url is required`, 400);
+    } else if (!validURL(url)) {
+        throw AppError.create(`url is not valid`, 400);
     }
 
-    if (!req.body.url) {
-        return next(AppError.create(`url is required`, 400));
-    } else if (!validURL(req.body.url)) {
-        return next(AppError.create(`url is not valid`, 400));
-    }
-
-    const _expiryDate = new Date(req.body.expiryDate);
-    if (req.body.expiryDate && isNaN(_expiryDate.getTime())) {
-        return next(AppError.create('Invalid date format', 400));
-    } else if(req.body.expiryDate && _expiryDate.getTime() < new Date().getTime()) {
-        return next(AppError.create(`expiry date should be greater than today`, 400));
+    const _expiryDate = new Date(expiryDate);
+    if (expiryDate && isNaN(_expiryDate.getTime())) {
+        throw AppError.create('Invalid date format', 400);
+    } else if(expiryDate && _expiryDate.getTime() < new Date().getTime()) {
+        throw AppError.create(`expiry date should be greater than today`, 400);
     }
 
 
@@ -36,7 +43,7 @@ const urlshortener = catchAsync(async (req, res, next) => {
     const [from, to]: [string, string] = appShortUrlLimit.split('_') as [string, string];
 
     //to create unique short url;
-    let tempUrl: string = req.body.url;
+    let tempUrl: string = url;
     const number: number = Math.random() * 10000;
     tempUrl = tempUrl + btoa(number + '') + new Date().toTimeString();
 
@@ -47,22 +54,29 @@ const urlshortener = catchAsync(async (req, res, next) => {
 
     const urlRegex = /^(https?:\/\/)/;
 
-    if (!urlRegex.test(req.body.url)) {
-        req.body.url = `https://${req.body.url}`
+    if (!urlRegex.test(url)) {
+        url = `https://${Url}`
     }
 
-    const url = await Url.create({
+    const _url = await Url.create({
         short_url: hash,
-        original_url: req.body.url,
-        expiry_date: req.body.expiryDate || null
+        original_url: url,
+        expiry_date: expiryDate || null
     });
 
+    return _url;
+}
+
+const urlshortener = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    let { expiryDate, url } = req.body;
+    let _url:any;
+    _url = await makeShortUrl(url, expiryDate);
+    
     res.status(200).send({
         status: 'success',
-        data: url.toJSON()
+        data: _url.toJSON()
     })
 })
-
 
 const getOriginalUrl = catchAsync(async (req: Request, res: Response, next: Next) => {
     const url: UrlModel | null = await Url.findOne({ where: { short_url: req.params.shortCode } }) as UrlModel | null;
@@ -126,5 +140,50 @@ const createAlias = catchAsync(async (req: Request, res: Response, next: NextFun
     }
 });
 
+const bulkCreate = catchAsync(async(req: MulterRequest, res: Response, next: NextFunction) => {
+     // Load and parse the Excel file
+     const workbook = xlsx.readFile(req.file!.path!);
+     const sheet = workbook.Sheets[workbook.SheetNames[0]]; // Use the first sheet
+     const data = xlsx.utils.sheet_to_json<{ url: string, expiryDate: Date }>(sheet); // Convert to JSON format
 
-export default { urlshortener, getOriginalUrl, createAlias }
+
+     const result = await Promise.allSettled(
+        data.map(async (row) => {
+            const url = row.url;
+            let expiryDate:any = Number(row.expiryDate);
+
+            const excelStartDate = new Date(1900, 0, 1);
+            expiryDate = new Date(excelStartDate.getTime() + (expiryDate - 1) * 24 * 60 * 60 * 1000).toDateString();
+            const shortUrl = await makeShortUrl(url, expiryDate);
+            return shortUrl;
+        })
+    );
+
+    const _result = result.reduce((acc:any, el:any) => {
+
+        if(el.status == 'rejected')
+            return acc;
+
+        el.value.short_url = el.value.short_url
+
+        return [...acc, el.value];
+    }, []);
+
+
+    // create xlsx file
+    const _workbook = xlsx.utils.book_new();
+    const _worksheet = xlsx.utils.json_to_sheet(_result);
+
+    xlsx.utils.book_append_sheet(_workbook, _worksheet, "Sheet1");
+    const filePath = `./output/${new Date().getTime()}.xlsx`;
+    if (!fs.existsSync("./output")) {
+        fs.mkdirSync("./output");
+    }
+    xlsx.writeFile(_workbook, filePath);
+    res.status(200).send({
+        data: filePath
+    })
+});
+
+
+export default { urlshortener, getOriginalUrl, createAlias, bulkCreate }
