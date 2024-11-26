@@ -4,7 +4,6 @@ import { Request, Response, NextFunction as Next, NextFunction } from "express";
 import catchAsync from '../utils/catchAsync';
 import AppError from "../utils/appError";
 import xlsx from 'xlsx';
-import puppeteer from 'puppeteer';
 import fs from 'fs';
 
 export interface MulterRequest extends Request {
