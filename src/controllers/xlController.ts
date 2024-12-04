@@ -9,8 +9,5 @@ export function xlValidate(req: MulterRequest, res: Response, next: Next) {
         return next(AppError.create(`No file Uploaded`,400))
     }
 
-    console.log('aaaa');
-    //validation code
-
     next();
 }

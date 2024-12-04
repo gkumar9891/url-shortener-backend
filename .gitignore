@@ -4,3 +4,4 @@ build
 .env
 sql_data
 uploads
+output

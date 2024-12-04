@@ -8,6 +8,7 @@ import fs from 'fs';
 
 export interface MulterRequest extends Request {
     file?: Express.Multer.File;
+    baseUrl: string;
 }
 
 const validURL = (str: string) => {
@@ -139,12 +140,28 @@ const createAlias = catchAsync(async (req: Request, res: Response, next: NextFun
     }
 });
 
+const validateXlData = <T extends {url: string, expiryDate: Date|null}[]>(data: T) : void => {
+    data.forEach(element => {
+        if(!element.url) {
+            throw AppError.create(`fill valid data`, 400);
+        } else if(element.expiryDate) {
+            const excelStartDate = new Date(1900, 0, 1);
+            let expiryDate:any = Number(element.expiryDate);
+            let _expiryDate = new Date(excelStartDate.getTime() + (expiryDate - 1) * 24 * 60 * 60 * 1000).getTime();
+            if(_expiryDate <= new Date().getTime()) {
+                throw AppError.create(`fill valid data`, 400);
+            }
+        }
+    });
+}
+
 const bulkCreate = catchAsync(async(req: MulterRequest, res: Response, next: NextFunction) => {
      // Load and parse the Excel file
      const workbook = xlsx.readFile(req.file!.path!);
      const sheet = workbook.Sheets[workbook.SheetNames[0]]; // Use the first sheet
      const data = xlsx.utils.sheet_to_json<{ url: string, expiryDate: Date }>(sheet); // Convert to JSON format
 
+     validateXlData<{url: string, expiryDate: Date|null}[]>(data);
 
      const result = await Promise.allSettled(
         data.map(async (row) => {
@@ -163,7 +180,7 @@ const bulkCreate = catchAsync(async(req: MulterRequest, res: Response, next: Nex
         if(el.status == 'rejected')
             return acc;
 
-        el.value.short_url = el.value.short_url
+        el.value.short_url = `${req.baseUrl}/${el.value.short_url}`
 
         return [...acc, el.value];
     }, []);
