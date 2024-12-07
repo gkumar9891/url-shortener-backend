@@ -191,13 +191,15 @@ const bulkCreate = catchAsync(async(req: MulterRequest, res: Response, next: Nex
     const _worksheet = xlsx.utils.json_to_sheet(_result);
 
     xlsx.utils.book_append_sheet(_workbook, _worksheet, "Sheet1");
-    const filePath = `./output/${new Date().getTime()}.xlsx`;
+    const filePath = `output/${new Date().getTime()}.xlsx`;
     if (!fs.existsSync("./output")) {
         fs.mkdirSync("./output");
     }
     xlsx.writeFile(_workbook, filePath);
     res.status(200).send({
-        data: filePath
+        data: {
+            filePath: `${filePath}` 
+        }
     })
 });
 

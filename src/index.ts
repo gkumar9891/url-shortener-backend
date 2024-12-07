@@ -4,6 +4,7 @@ dotenv.config();
 import express, {Request, Response, NextFunction as Next} from "express";
 import cors from "cors";
 import urlshortenerRoutes from "./routes/urlShortenerRoutes";
+import downloadRoutes from "./routes/downloadRoutes";
 import sequalize from "./db";
 import morgan from "morgan";
 import helmet from "helmet";
@@ -15,6 +16,10 @@ import AppError from './utils/appError';
 import globalErrorHandler from './controllers/errorController';
 
 const app = express();
+
+// Serving static files
+app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../output')));
 
 // whitelist urls
 let whitelist:string|string[] = process.env.APP_WHITELIST_URLS! as string;
@@ -67,8 +72,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cors(corsOptionsDelegate));
-app.get('/:shortCode', urlShortenerController.getOriginalUrl); //created as alias to find full url in less characters
+// app.get('/:shortCode', urlShortenerController.getOriginalUrl); //created as alias to find full url in less characters
 app.use('/api/v1/url-shortener', urlshortenerRoutes);
+app.use('/api/v1/download', downloadRoutes);
 
 app.all('*', (req: Request, res: Response, next: Next) => {
   next(AppError.create(`Can't find ${req.originalUrl} on this server!`, 404));
