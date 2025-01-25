@@ -3,7 +3,7 @@ import urlshortenerController from '../controllers/urlShortener';
 import {xlValidate} from '../controllers/xlController'
 import multer from "multer";
 
-const upload = multer({dest: "uploads/"})
+const upload = multer()
 
 const router = express.Router();
 
